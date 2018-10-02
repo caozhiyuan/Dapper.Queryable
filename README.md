@@ -12,7 +12,7 @@ Queryable Analyzers
 | StringContains | Name like @NamePattern |
 
 
-use this query (that can be transport)
+use this query (can be transport in Remote Procedure Call )
 ```C#
   var query = new ApplicationQuery()
   {
