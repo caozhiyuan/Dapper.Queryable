@@ -11,6 +11,5 @@ Queryable Analyzers
 | Range     | Id>10 AND Id<0   |
 | StringContains | Name like @NamePattern |
 
-Queryable Detail In Test :DapperExtensionTest¡¢QueryableTest
+Detail In Test : https://github.com/caozhiyuan/Dapper.Queryable/blob/master/Dapper.Queryable.Test/DapperExtensionTest.cs
 
-CUD In Test :DapperExtensionTest
