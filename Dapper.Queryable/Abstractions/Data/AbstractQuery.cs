@@ -9,13 +9,13 @@
 
     public abstract class AbstractQuery : IQuery
     {
-        public int? Count { get; set; }
+        public virtual int? Count { get; set; }
 
-        public List<OrderBy> OrderBys { get; set; }
+        public virtual List<OrderBy> OrderBys { get; set; }
 
-        public int? Skip { get; set; }
+        public virtual int? Skip { get; set; }
 
-        public int? Take { get; set; }
+        public virtual int? Take { get; set; }
     }
 }
 
