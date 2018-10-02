@@ -1,11 +1,20 @@
-﻿using Xunit;
+﻿using System.Diagnostics;
+using Xunit;
 using Dapper.Queryable.Abstractions.Data;
 using Dapper.Queryable.Queryable;
+using Xunit.Abstractions;
 
 namespace Dapper.Queryable.Test
 {
     public class QueryableTest
     {
+        private readonly ITestOutputHelper _outputHelper;
+
+        public QueryableTest(ITestOutputHelper outputHelper)
+        {
+            _outputHelper = outputHelper;
+        }
+
         [Fact]
         public void FromCacheQueryTest()
         {
@@ -39,7 +48,7 @@ namespace Dapper.Queryable.Test
         {
             var query = new ApplicationQuery()
             {
-                Ids = new[] {1, 2, 3},
+                Ids = new[] { 1, 2, 3 },
                 IdRange = new Range<int>
                 {
                     Left = 1,
@@ -48,9 +57,31 @@ namespace Dapper.Queryable.Test
                 NamePattern = "XX"
             };
             var cause = new SqlBuilder().SelectAsync(query);
-            Assert.Equal("SELECT  [Id] As [Id] , [Name] As [name] , [CreateTime] As [CreateTime]  FROM [Application] with(nolock)   WHERE [Id] IN @Ids AND [Name] like @NamePattern AND [Id] > @IdLeft", cause.Sql);
+            Assert.Equal("SELECT  [Id] As [Id] , [Name] As [name] , [CreateTime] As [CreateTime]  FROM [Application] with(nolock)   WHERE  [Id] IN @Ids AND [Name] like @NamePattern AND [Id] > @IdLeft", cause.Sql);
         }
 
+        [Fact]
+        public void ApplicationQueryTest2()
+        {
+            Stopwatch sw = new Stopwatch();
+            sw.Start();
+            for (int i = 0; i < 100000; i++)
+            {
+                var query = new ApplicationQuery()
+                {
+                    Ids = new[] { 1, 2, 3 },
+                    IdRange = new Range<int>
+                    {
+                        Left = 1,
+                        LeftExclusive = true
+                    },
+                    NamePattern = "XX"
+                };
+                new SqlBuilder().SelectAsync(query);
+            }
+            sw.Stop();
+            _outputHelper.WriteLine($"ElapsedMilliseconds:{sw.ElapsedMilliseconds}");
+        }
 
         [Fact]
         public void PageTest()
