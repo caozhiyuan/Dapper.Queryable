@@ -16,23 +16,24 @@ namespace Dapper.Queryable
         public string Insert(Type type)
         {
             bool mutil = false;
+            Type modelType = type;
             if (type.IsArray)
             {
                 mutil = true;
-                type = type.GetElementType();
-                if (type == null)
+                modelType = type.GetElementType();
+                if (modelType == null)
                 {
                     throw new ArgumentException("Type GetElementType Null");
                 }
             }
 
-            string key = type.FullName + SqlOperation.Insert;
+            string key = modelType.FullName + SqlOperation.Insert;
             if (!ModuleHandles.TryGetValue(key, out var @delegate))
             {
-                @delegate = (Delegate) SqlBuilderFactory.Factory(type, SqlOperation.Insert);
+                @delegate = (Delegate) SqlBuilderFactory.Factory(modelType, SqlOperation.Insert);
                 if (@delegate == null)
                 {
-                    throw new ArgumentNullException(type.FullName + "Insert delegate is null");
+                    throw new ArgumentNullException(modelType.FullName + "Insert delegate is null");
                 }
 
                 ModuleHandles.TryAdd(key, @delegate);
@@ -45,22 +46,23 @@ namespace Dapper.Queryable
 
         public string Update(Type type)
         {
+            Type modelType = type;
             if (type.IsArray)
             {
-                type = type.GetElementType();
-                if (type == null)
+                modelType = type.GetElementType();
+                if (modelType == null)
                 {
                     throw new ArgumentException("Type GetElementType Null");
                 }
             }
 
-            string key = type.FullName + SqlOperation.Update;
+            string key = modelType.FullName + SqlOperation.Update;
             if (!ModuleHandles.TryGetValue(key, out var @delegate))
             {
-                @delegate = (Delegate) SqlBuilderFactory.Factory(type, SqlOperation.Update);
+                @delegate = (Delegate) SqlBuilderFactory.Factory(modelType, SqlOperation.Update);
                 if (@delegate == null)
                 {
-                    throw new ArgumentNullException(type.FullName + "Update delegate is null");
+                    throw new ArgumentNullException(modelType.FullName + "Update delegate is null");
                 }
                    
                 ModuleHandles.TryAdd(key, @delegate);
@@ -72,22 +74,23 @@ namespace Dapper.Queryable
 
         public string Delete(Type type)
         {
+            Type modelType = type;
             if (type.IsArray)
             {
-                type = type.GetElementType();
-                if (type == null)
+                modelType = type.GetElementType();
+                if (modelType == null)
                 {
                     throw new ArgumentException("Type GetElementType Null");
                 }
             }
 
-            string key = type.FullName + SqlOperation.Delete;
+            string key = modelType.FullName + SqlOperation.Delete;
             if (!ModuleHandles.TryGetValue(key, out var @delegate))
             {
-                @delegate = (Delegate) SqlBuilderFactory.Factory(type, SqlOperation.Delete);
+                @delegate = (Delegate) SqlBuilderFactory.Factory(modelType, SqlOperation.Delete);
                 if (@delegate == null)
                 {
-                    throw new ArgumentNullException(type.FullName + "Delete delegate is null");
+                    throw new ArgumentNullException(modelType.FullName + "Delete delegate is null");
                 }
 
                 ModuleHandles.TryAdd(key, @delegate);
