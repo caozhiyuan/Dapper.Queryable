@@ -3,7 +3,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
 
-namespace Dapper.Queryable
+namespace Dapper.Queryable.Utils
 {
     public class MethodInfoUtil
     {

@@ -1,16 +1,14 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
-using Dapper.Queryable.Abstractions.Data.Attributes;
 using Dapper.Queryable.Configuration;
 
 namespace Dapper.Queryable.Queryable.Analyzers
 {
     public class Equal : Where
     {
-        private static Type[] types = new Type[7]
+        private static readonly Type[] Types = 
         {
             typeof(int),
             typeof(Decimal),
@@ -28,7 +26,7 @@ namespace Dapper.Queryable.Queryable.Analyzers
             if (propertyInfo == null)
                 return false;
             Type propertyType2 = propertyInfo.PropertyType;
-            if (types.Contains(propertyType1))
+            if (Types.Contains(propertyType1))
             {
                 if (propertyType2.IsGenericType && propertyType2.GetGenericTypeDefinition() == typeof(Nullable<>))
                     return propertyType1 == propertyType2.GetGenericArguments().First();
@@ -38,10 +36,10 @@ namespace Dapper.Queryable.Queryable.Analyzers
             if (!propertyType1.IsGenericType || !(propertyType1.GetGenericTypeDefinition() == typeof(Nullable<>)))
                 return false;
             Type type = propertyType1.GetGenericArguments().First();
-            if (!types.Contains(type))
+            if (!Types.Contains(type))
                 return false;
             if (propertyType2.IsGenericType && propertyType2.GetGenericTypeDefinition() == typeof(Nullable<>))
-                return type == ( propertyType2.GetGenericArguments()).First<Type>();
+                return type == propertyType2.GetGenericArguments().First();
             return type == propertyType2;
         }
 

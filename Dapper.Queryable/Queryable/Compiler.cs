@@ -96,16 +96,9 @@ namespace Dapper.Queryable.Queryable
 
         private static IAnalyzer[] CreateAnalyzer(Type typeOfModel)
         {
-            var tableAttribute = SqlBuilderUtil.GetTable(typeOfModel);
-            switch (tableAttribute.Analyzer)
-            {
-                case Analyzer.Ms:
-                    return MsAnalyzer.Create();
-                case Analyzer.My:
-                    return MyAnalyzer.Create();
-                default:
-                    throw new ArgumentException(nameof(Analyzer));
-            }
+            var tableAttribute = TableCache.GetTable(typeOfModel);
+            var analyzer = tableAttribute.Analyzer;
+            return AnalyzerFactory.GetAnalyzer(analyzer);
         }
 
         private static readonly MethodInfo GetWhereMethodInfo =

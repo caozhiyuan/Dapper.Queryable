@@ -66,7 +66,7 @@ namespace Dapper.Queryable
                 throw new Exception("InsertAsync Error");
             }
 
-            var columnDescriptors = SqlBuilderUtil.GetColumnDescriptors(typeof(T));
+            var columnDescriptors = TableCache.GetColumnDescriptors(typeof(T));
             var primaryKey = columnDescriptors.FirstOrDefault(n => n.IsPrimaryKey);
             primaryKey?.SetPrimaryKey(entity, first.Id);
             return 1;

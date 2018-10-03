@@ -1,11 +1,10 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Linq;
-using System.Text;
 using Dapper.Queryable.Abstractions.Data;
-using Dapper.Queryable.Abstractions.Data.Attributes;
 using Dapper.Queryable.CUD;
 using Dapper.Queryable.Queryable;
+using Dapper.Queryable.Utils;
 
 namespace Dapper.Queryable
 {
@@ -98,28 +97,6 @@ namespace Dapper.Queryable
             return func?.Invoke();
         }
 
-        private Clause GetMsSqlStr<TModel>(IQuery<TModel> query)
-        {
-            var clause = BuildClause(query);
-            if (query.Skip.HasValue)
-            {
-                var sql = BuildMsPageSql(query, clause);
-                clause.Sql = sql;
-                return clause;
-            }
-            else
-            {
-                if (string.IsNullOrEmpty(clause.Where))
-                {
-                    return clause;
-                }
-
-                var sql = $"{this.BuildSelectSql<TModel>(Analyzer.Ms)} {clause.Where}";
-                clause.Sql = sql;
-                return clause;
-            }
-        }
-
         private static Clause BuildClause<TModel>(IQuery<TModel> query)
         {
             var func = QueryHandlers.TryGet<TModel>(query.GetType());
@@ -130,134 +107,121 @@ namespace Dapper.Queryable
             return clause;
         }
 
-        private string BuildMsPageSql<TModel>(IQuery<TModel> query, Clause clause)
+        private string BuildPageSql<TModel>(IQuery<TModel> query, Clause clause)
         {
-            var descriptor = SqlBuilderUtil.GetTableDescriptor(typeof(TModel));
+            var descriptor = TableCache.GetTableDescriptor(typeof(TModel));
             if (descriptor == null)
                 throw new ArgumentException("TableName");
 
-            if (query.OrderBys == null || query.OrderBys.Count == 0)
-            {
-                var pks = SqlBuilderUtil.GetColumnDescriptors(typeof(TModel))
-                    .Where(n => n.IsPrimaryKey)
-                    .ToList();
-
-                var sb = new StringBuilder();
-                var len = pks.Count;
-                sb.Append(" ORDER BY ");
-                for (var index = 0; index < len; index++)
-                {
-                    var pk = pks[index];
-                    sb.Append($" [{pk.DbName}] DESC ");
-                    if (index != len - 1)
-                    {
-                        sb.Append(",");
-                    }
-                }
-                clause.OrderBy = sb.ToString();
-            }
-
             clause.Paging = true;
-            var wheresql = $"{clause.Where} {clause.OrderBy} offset {query.Skip ?? 0} rows fetch next {query.Take ?? 1} rows only";
-            var sql = $"{this.BuildSelectSql<TModel>(Analyzer.Ms)} {wheresql} ; SELECT COUNT(1) from [{descriptor.TableName}] {clause.Where};";
-            return sql;
-        }
 
-        private Clause GetMySqlStr<TModel>(IQuery<TModel> query)
-        {
-            var clause = BuildClause(query);
-            if (query.Skip.HasValue)
-            {
-                var sql = BuildMySqlPageSql(query, clause);
-                clause.Sql = sql;
-                return clause;
-            }
-            else
-            {
-                if (string.IsNullOrEmpty(clause.Where))
-                {
-                    return clause;
-                }
-
-                var descriptor = SqlBuilderUtil.GetTableDescriptor(typeof(TModel));
-                if (descriptor == null)
-                    throw new ArgumentException("TableName");
-
-                var sql = $"{this.BuildSelectSql<TModel>(Analyzer.My)} {clause.Where}";
-                clause.Sql = sql;
-                return clause;
-            }
-        }
-
-        private string BuildMySqlPageSql<TModel>(IQuery<TModel> query, Clause clause)
-        {
-            var descriptor = SqlBuilderUtil.GetTableDescriptor(typeof(TModel));
-            if (descriptor == null)
-                throw new ArgumentException("TableName");
+            var options = descriptor.Options;
 
             if (query.OrderBys == null || query.OrderBys.Count == 0)
             {
-                var pks = SqlBuilderUtil.GetColumnDescriptors(typeof(TModel))
-                    .Where(n => n.IsPrimaryKey)
-                    .ToList();
-
-                var sb = new StringBuilder();
-                var len = pks.Count;
-                sb.Append(" ORDER BY ");
-                for (var index = 0; index < len; index++)
-                {
-                    var pk = pks[index];
-                    sb.Append($"  `{pk.DbName}` DESC ");
-                    if (index != len - 1)
-                    {
-                        sb.Append(",");
-                    }
-                }
-                clause.OrderBy = sb.ToString();
+                BuildDefaultOrderBy(clause, descriptor);
             }
+            
+            var sqlBuilder = StringBuilderCache.Acquire();
+            sqlBuilder.Append(BuildSelectSql(descriptor));
+            sqlBuilder.Append(clause.Where);
+            sqlBuilder.Append(clause.OrderBy);
+            sqlBuilder.Append(options.GetPageSql(query.Skip ?? 0, query.Take ?? 1));
+            sqlBuilder.Append(" ;");
 
-            clause.Paging = true;
-            var wheresql = $"{clause.Where} {clause.OrderBy} limit {query.Skip ?? 0},{query.Take ?? 1}";
-            var sql = $"{this.BuildSelectSql<TModel>(Analyzer.My)} {wheresql}; SELECT COUNT(1) from `{descriptor.TableName}` {clause.Where};";
-            return sql;
+            sqlBuilder.Append("SELECT COUNT(1) from ");
+            sqlBuilder.Append(options.StartDelimiter);
+            sqlBuilder.Append(descriptor.TableName);
+            sqlBuilder.Append(options.EndDelimiter);
+            sqlBuilder.Append(clause.Where);
+            sqlBuilder.Append(" ;");
+            return StringBuilderCache.GetStringAndRelease(sqlBuilder);
+        }
+
+        private static void BuildDefaultOrderBy(Clause clause,
+            TableDescriptor descriptor)
+        {
+            var options = descriptor.Options;
+            var pks = descriptor.ColumnDescriptors.Where(n => n.IsPrimaryKey).ToList();
+            var stringBuilder = StringBuilderCache.Acquire();
+            var len = pks.Count;
+            stringBuilder.Append(" ORDER BY");
+            for (var index = 0; index < len; index++)
+            {
+                var pk = pks[index];
+                stringBuilder.Append(" ");
+                stringBuilder.Append(options.StartDelimiter);
+                stringBuilder.Append(pk.DbName);
+                stringBuilder.Append(options.EndDelimiter);
+                stringBuilder.Append(" DESC");
+                if (index != len - 1)
+                {
+                    stringBuilder.Append(",");
+                }
+            }
+            clause.OrderBy = StringBuilderCache.GetStringAndRelease(stringBuilder);
         }
 
         public Clause SelectAsync<TModel>(IQuery<TModel> query)
         {
-            var dialect = SqlBuilderUtil.GetDialect(typeof(TModel));
-            Clause clause;
-            switch (dialect)
+            var clause = BuildClause(query);
+            if (query.Skip.HasValue || query.Take.HasValue)
             {
-                case Analyzer.Ms:
-                    clause = this.GetMsSqlStr(query);
-                    break;
-                case Analyzer.My:
-                    clause = this.GetMySqlStr(query);
-                    break;
-                default:
-                    throw new ArgumentException("Analyzer");
+                var sql = BuildPageSql(query, clause);
+                clause.Sql = sql;
+                return clause;
             }
-            return clause;
-        }
 
-        private string BuildSelectSql<TModel>(Analyzer analyzer)
-        {
-            var descriptor = SqlBuilderUtil.GetTableDescriptor(typeof(TModel));
+            if (string.IsNullOrEmpty(clause.Where))
+            {
+                return clause;
+            }
+
+            var descriptor = TableCache.GetTableDescriptor(typeof(TModel));
             if (descriptor == null)
                 throw new ArgumentException("TableName");
 
-            var str = string.Empty;
-            switch (analyzer)
-            {
-                case Analyzer.Ms:
-                    str = $"SELECT {descriptor.Columns} FROM [{descriptor.TableName}] with(nolock) ";
-                    break;
-                case Analyzer.My:
-                    str = $"SELECT {descriptor.Columns} FROM `{descriptor.TableName}` ";
-                    break;
-            }
+            var sqlBuilder = StringBuilderCache.Acquire();
+            sqlBuilder.Append(this.BuildSelectSql(descriptor));
+            sqlBuilder.Append(clause.Where);
+            sqlBuilder.Append(clause.OrderBy);
+            clause.Sql = StringBuilderCache.GetStringAndRelease(sqlBuilder);
+            return clause;
+        }
 
-            return str;
+        private static string GetColumns(TableDescriptor descriptor)
+        {
+            var options = descriptor.Options;
+            var startDelimiter = options.StartDelimiter;
+            var endDelimiter = options.EndDelimiter;
+            var len = descriptor.ColumnDescriptors.Count;
+            var stringBuilder = StringBuilderCache.Acquire();
+            for (var i = 0; i < len; i++)
+            {
+                var n = descriptor.ColumnDescriptors[i];
+                stringBuilder.Append(" ");
+                stringBuilder.Append(startDelimiter);
+                stringBuilder.Append(n.Name);
+                stringBuilder.Append(endDelimiter);
+                stringBuilder.Append(" As ");
+                stringBuilder.Append(startDelimiter);
+                stringBuilder.Append(n.DbName);
+                stringBuilder.Append(endDelimiter);
+                stringBuilder.Append(" ");
+                if (i != len - 1)
+                {
+                    stringBuilder.Append(",");
+                }
+            }
+            return StringBuilderCache.GetStringAndRelease(stringBuilder);
+        }
+
+        private string BuildSelectSql(TableDescriptor descriptor)
+        {
+            var columns = GetColumns(descriptor);
+            var tableName = descriptor.TableName;
+            var options = descriptor.Options;
+            return options.GetSelectSql(columns, tableName);
         }
     }
 }

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+using Dapper.Queryable.Utils;
 
 namespace Dapper.Queryable.Queryable
 {
@@ -32,7 +33,7 @@ namespace Dapper.Queryable.Queryable
 
             this.Statements = new List<Expression>();
 
-            this.Analyzer = SqlBuilderUtil.GetDialect(this.ModelType);
+            this.Analyzer = TableCache.GetDialect(this.ModelType);
         }
 
         public Analyzer Analyzer { get; set; }

@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Text;
 using Dapper.Queryable.Abstractions.Data;
 using Dapper.Queryable.Configuration;
+using Dapper.Queryable.Utils;
 
 namespace Dapper.Queryable.Queryable.Analyzers
 {
@@ -12,17 +13,17 @@ namespace Dapper.Queryable.Queryable.Analyzers
     {
         protected static string BuildSort<T>(IQuery<T> query)
         {
-            var analyzer = SqlBuilderUtil.GetDialect(typeof(T));
+            var analyzer = TableCache.GetDialect(typeof(T));
             var sb = new StringBuilder();
             if (query.OrderBys != null)
             {
                 var len = query.OrderBys.Count;
                 if (len > 0)
                 {
-                    sb.Append(" ORDER BY ");
+                    sb.Append(" ORDER BY");
                 }
 
-                var cols = SqlBuilderUtil.GetColumnDescriptors(typeof(T));
+                var cols = TableCache.GetColumnDescriptors(typeof(T));
                 for (var index = 0; index < len; index++)
                 {
                     var sort = query.OrderBys[index];
@@ -35,7 +36,7 @@ namespace Dapper.Queryable.Queryable.Analyzers
                     var startDelimiter = options.StartDelimiter;
                     var endDelimiter = options.EndDelimiter;
 
-                    sb.Append($" {startDelimiter}{sort.OrderField}{endDelimiter} {sort.OrderDirection} ");
+                    sb.Append($" {startDelimiter}{sort.OrderField}{endDelimiter} {sort.OrderDirection}");
                     if (index != len - 1)
                     {
                         sb.Append(",");

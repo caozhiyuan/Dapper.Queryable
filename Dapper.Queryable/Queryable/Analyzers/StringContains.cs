@@ -1,7 +1,6 @@
 ﻿using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
-using Dapper.Queryable.Abstractions.Data.Attributes;
 using Dapper.Queryable.Configuration;
 
 namespace Dapper.Queryable.Queryable.Analyzers

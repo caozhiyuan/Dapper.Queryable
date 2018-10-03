@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Text;
 using Dapper.Queryable.Configuration;
+using Dapper.Queryable.Utils;
 
 namespace Dapper.Queryable.CUD
 {
@@ -17,12 +18,13 @@ namespace Dapper.Queryable.CUD
 
         public Func<string> UpdateBuild()
         {
-            var cols = SqlBuilderUtil.GetColumnDescriptors(_type);
-            var tableAttr = SqlBuilderUtil.GetTable(_type);
-            var dialectPatten = SqlBuilderUtil.GetDialectPatten(tableAttr.Analyzer, SqlOperation.Update);
+            var tableAttr = TableCache.GetTableDescriptor(_type);
+            var cols = tableAttr.ColumnDescriptors;
+            var options = tableAttr.Options;
+            
+            var dialectPatten = options.GetOperationPatten(SqlOperation.Update);
 
             var expressionList = new List<Expression>();
-
             var tableNameExpr = Expression.Variable(typeof(string), "tableName");
             var sqlpattenExpr = Expression.Variable(typeof(string), "sqlpatten");
             var columnsExpr = Expression.Variable(typeof(StringBuilder), "columns");
@@ -41,7 +43,7 @@ namespace Dapper.Queryable.CUD
             expressionList.Add(Expression.Assign(sqlpattenExpr,
                 Expression.Constant(dialectPatten)));
 
-            expressionList.Add(Expression.Assign(tableNameExpr, Expression.Constant(tableAttr.Name)));
+            expressionList.Add(Expression.Assign(tableNameExpr, Expression.Constant(tableAttr.TableName)));
 
             expressionList.Add(Expression.Assign(sqlpattenExpr,
                 Expression.Call(MethodInfoUtil.ReplaceMethod, new Expression[]
@@ -50,8 +52,7 @@ namespace Dapper.Queryable.CUD
                     Expression.Constant("{TableName}"),
                     tableNameExpr
                 })));
-
-            var options = SqlDatabaseOptionsFactory.GetSqlDatabaseOptions(tableAttr.Analyzer);
+            
             var startDelimiter = options.StartDelimiter;
             var endDelimiter = options.EndDelimiter;
 

@@ -5,10 +5,11 @@ using System.Linq;
 using System.Reflection;
 using Dapper.Queryable.Abstractions.Data.Attributes;
 using Dapper.Queryable.Configuration;
+using Dapper.Queryable.Utils;
 
 namespace Dapper.Queryable
 {
-    internal static class SqlBuilderUtil
+    internal static class TableCache
     {
         private static readonly ConcurrentDictionary<Type, TableAttribute> Tables =
             new ConcurrentDictionary<Type, TableAttribute>();
@@ -39,27 +40,19 @@ namespace Dapper.Queryable
 
         public static TableDescriptor GetTableDescriptor(Type typeOfModel)
         {
-            TableAttribute table = GetTable(typeOfModel);
-            TableDescriptor tableDescriptor = new TableDescriptor
+            var table = GetTable(typeOfModel);
+            var cols = GetColumnDescriptors(typeOfModel);
+            var options = SqlDatabaseOptionsFactory.GetSqlDatabaseOptions(table.Analyzer);
+
+            var tableDescriptor = new TableDescriptor
             {
-                Columns = GetColumns(typeOfModel),
-                TableName = table.Name
+                TableName = table.Name,
+                Analyzer = table.Analyzer,
+                Db = table.Db,
+                ColumnDescriptors = cols,
+                Options = options
             };
             return tableDescriptor;
-        }
-
-        private static string GetColumns(Type typeOfModel)
-        {
-            var cols = GetColumnDescriptors(typeOfModel);
-
-            var dialect = GetDialect(typeOfModel);
-
-            var options = SqlDatabaseOptionsFactory.GetSqlDatabaseOptions(dialect);
-            var startDelimiter = options.StartDelimiter;
-            var endDelimiter = options.EndDelimiter;
-
-            var colStrs = cols.Select(n => $" {startDelimiter}{n.Name}{endDelimiter} As {startDelimiter}{n.DbName}{endDelimiter} ");
-            return string.Join(",", colStrs);
         }
 
         public static List<ColumnDescriptor> GetColumnDescriptors(Type typeOfModel)
@@ -141,44 +134,6 @@ namespace Dapper.Queryable
             }
 
             return tableAttribute;
-        }
-
-        public static string GetDialectPatten(Analyzer dialect, SqlOperation operation)
-        {
-            if (dialect == Analyzer.My)
-                return GetMySqlOperationPatten(operation);
-            return GetSqlServerOperationPatten(operation);
-        }
-
-        private static string GetSqlServerOperationPatten(SqlOperation operation)
-        {
-            switch (operation)
-            {
-                case SqlOperation.Insert:
-                    return
-                        "INSERT INTO [{TableName}] ({Columns}) VALUES ({Values}); select SCOPE_IDENTITY() AS [Id] ";
-                case SqlOperation.Update:
-                    return "UPDATE [{TableName}] SET {SetColumns} {WhereClause}";
-                case SqlOperation.Delete:
-                    return "DELETE FROM [{TableName}] {WhereClause}";
-                default:
-                    return (string) null;
-            }
-        }
-
-        private static string GetMySqlOperationPatten(SqlOperation operation)
-        {
-            switch (operation)
-            {
-                case SqlOperation.Insert:
-                    return "INSERT INTO `{TableName}` ({Columns}) VALUES ({Values}); SELECT @@IDENTITY AS `Id` ";
-                case SqlOperation.Update:
-                    return "UPDATE `{TableName}` SET {SetColumns} {WhereClause}";
-                case SqlOperation.Delete:
-                    return "DELETE FROM `{TableName}` {WhereClause}";
-                default:
-                    return (string) null;
-            }
         }
     }
 }

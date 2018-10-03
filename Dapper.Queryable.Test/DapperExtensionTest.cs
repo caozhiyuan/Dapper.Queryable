@@ -88,7 +88,7 @@ namespace Dapper.Queryable.Test
                 });
                 if (application != null)
                 {
-                    application.Name = "123456";
+                    application.Name = Guid.NewGuid().ToString();
                     await connection.UpdateAsync(application);
                 }
             }
