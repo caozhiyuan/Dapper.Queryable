@@ -12,10 +12,8 @@ Queryable Analyzers
 | StringContains | Name like @NamePattern |
 
 
-use this query (can be transport in Remote Procedure Call )
+Table Application 
 ```C#
-
-
     [Table(Analyzer = Analyzer.Ms, Db = "systest", Name = "Application")]
     public class Application : IModel
     {
@@ -39,7 +37,10 @@ use this query (can be transport in Remote Procedure Call )
 
         public Range<int> IdRange { get; set; }
     }
+```
 
+use this query (can be transport in Remote Procedure Call )
+```C#
     var query = new ApplicationQuery()
     {
         Ids = new[] { 1, 2, 3 },
