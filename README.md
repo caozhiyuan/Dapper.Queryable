@@ -14,16 +14,42 @@ Queryable Analyzers
 
 use this query (can be transport in Remote Procedure Call )
 ```C#
-  var query = new ApplicationQuery()
-  {
-      Ids = new[] { 1, 2, 3 },
-      IdRange = new Range<int>
-      {
-          Left = 1,
-          LeftExclusive = true
-      },
-      NamePattern = "XX"
-  };
+
+
+    [Table(Analyzer = Analyzer.Ms, Db = "systest", Name = "Application")]
+    public class Application : IModel
+    {
+        [Key(AutoIncrement = true)]
+        public int Id { get; set; }
+
+        [Column(Name = "name")]
+        public string Name { get; set; }
+
+        public DateTime CreateTime { get; set; }
+    }
+
+    public class ApplicationQuery : AbstractQuery<Application>
+    {
+        [CacheKey]
+        public int[] Ids { get; set; }
+
+        public string NamePattern { get; set; }
+
+        public string Name { get; set; }
+
+        public Range<int> IdRange { get; set; }
+    }
+
+    var query = new ApplicationQuery()
+    {
+        Ids = new[] { 1, 2, 3 },
+        IdRange = new Range<int>
+        {
+            Left = 1,
+            LeftExclusive = true
+        },
+        NamePattern = "XX"
+    };
 ```
 buil sql
 
