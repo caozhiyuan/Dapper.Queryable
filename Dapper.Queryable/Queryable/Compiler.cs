@@ -5,7 +5,6 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
 using Dapper.Queryable.Abstractions.Data;
-using Dapper.Queryable.Abstractions.Data.Attributes;
 
 namespace Dapper.Queryable.Queryable
 {

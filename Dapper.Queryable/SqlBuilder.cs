@@ -13,68 +13,38 @@ namespace Dapper.Queryable
         private static readonly ConcurrentDictionary<string, Delegate> ModuleHandles =
             new ConcurrentDictionary<string, Delegate>();
 
-        public string Insert(Type type)
+        private static readonly ConcurrentDictionary<Type, Delegate> QueryHandlers =
+            new ConcurrentDictionary<Type, Delegate>();
+
+        private static Compiler _compiler;
+
+        private static Compiler QueryCompiler
         {
-            bool mutil = false;
-            Type modelType = type;
-            if (type.IsArray)
-            {
-                mutil = true;
-                modelType = type.GetElementType();
-                if (modelType == null)
-                {
-                    throw new ArgumentException("Type GetElementType Null");
-                }
-            }
+            get { return _compiler ?? (_compiler = new Compiler()); }
+        }
 
-            string key = modelType.FullName + SqlOperation.Insert;
-            if (!ModuleHandles.TryGetValue(key, out var @delegate))
-            {
-                @delegate = (Delegate) SqlBuilderFactory.Factory(modelType, SqlOperation.Insert);
-                if (@delegate == null)
-                {
-                    throw new ArgumentNullException(modelType.FullName + "Insert delegate is null");
-                }
-
-                ModuleHandles.TryAdd(key, @delegate);
-            }
-
-            var func = (Func<string>) @delegate;
-            var str = func?.Invoke() ?? String.Empty;
-            return mutil ? str.Split(';')[0] : str;
+        public string Insert(Type type)
+        {   
+            var func = GetOperationDelegate(type, SqlOperation.Insert);
+            var str = func.Invoke() ?? String.Empty;
+            return type.IsArray ? str.Split(';')[0] : str;
         }
 
         public string Update(Type type)
-        {
-            Type modelType = type;
-            if (type.IsArray)
-            {
-                modelType = type.GetElementType();
-                if (modelType == null)
-                {
-                    throw new ArgumentException("Type GetElementType Null");
-                }
-            }
-
-            string key = modelType.FullName + SqlOperation.Update;
-            if (!ModuleHandles.TryGetValue(key, out var @delegate))
-            {
-                @delegate = (Delegate) SqlBuilderFactory.Factory(modelType, SqlOperation.Update);
-                if (@delegate == null)
-                {
-                    throw new ArgumentNullException(modelType.FullName + "Update delegate is null");
-                }
-                   
-                ModuleHandles.TryAdd(key, @delegate);
-            }
-
-            var func = (Func<string>) @delegate;
-            return func?.Invoke();
+        {     
+            var func = GetOperationDelegate(type, SqlOperation.Update);
+            return func.Invoke();
         }
 
         public string Delete(Type type)
         {
-            Type modelType = type;
+            var func = GetOperationDelegate(type, SqlOperation.Delete);
+            return func.Invoke();
+        }
+
+        private static Func<string> GetOperationDelegate(Type type, SqlOperation opr)
+        {
+            var modelType = type;
             if (type.IsArray)
             {
                 modelType = type.GetElementType();
@@ -84,30 +54,33 @@ namespace Dapper.Queryable
                 }
             }
 
-            string key = modelType.FullName + SqlOperation.Delete;
-            if (!ModuleHandles.TryGetValue(key, out var @delegate))
+            var key = modelType.FullName + opr;
+            var @delegate = ModuleHandles.GetOrAdd(key, n =>
             {
-                @delegate = (Delegate) SqlBuilderFactory.Factory(modelType, SqlOperation.Delete);
-                if (@delegate == null)
+                var d = (Delegate) SqlBuilderFactory.Factory(modelType, opr);
+                if (d == null)
                 {
-                    throw new ArgumentNullException(modelType.FullName + "Delete delegate is null");
+                    throw new ArgumentException($"{n} delegate is null");
                 }
-
-                ModuleHandles.TryAdd(key, @delegate);
-            }
-
+                return d;
+            });
             var func = (Func<string>) @delegate;
-            return func?.Invoke();
+            return func;
         }
 
-        private static Clause BuildClause<TModel>(IQuery<TModel> query)
+        private static Clause GetSqlClause<TModel>(IQuery<TModel> query)
         {
-            var func = QueryHandlers.TryGet<TModel>(query.GetType());
-            if (func == null)
-                throw new ArgumentNullException(nameof(query));
-
-            var clause = func(query);
-            return clause;
+            var @delegate = QueryHandlers.GetOrAdd(query.GetType(), n =>
+            {
+                var d = QueryCompiler.Compile<TModel>(n);
+                if (d == null)
+                {
+                    throw new ArgumentException($"QueryCompiler {n.FullName} Get Null Delegate");
+                }
+                return d;
+            });
+            var func = (Func<IQuery<TModel>, Clause>)@delegate;
+            return func(query);
         }
 
         private string BuildPageSql<TModel>(IQuery<TModel> query, Clause clause)
@@ -166,7 +139,7 @@ namespace Dapper.Queryable
 
         public Clause SelectAsync<TModel>(IQuery<TModel> query)
         {
-            var clause = BuildClause(query);
+            var clause = GetSqlClause(query);
             try
             {
                 if (query.Skip.HasValue || query.Take.HasValue)
@@ -182,7 +155,6 @@ namespace Dapper.Queryable
                 }
 
                 var descriptor = TableCache.GetTableDescriptor(typeof(TModel));
-
                 var sqlBuilder = StringBuilderCache.Acquire();
                 sqlBuilder.Append(this.BuildSelectSql(descriptor));
                 sqlBuilder.Append(clause.Where);
