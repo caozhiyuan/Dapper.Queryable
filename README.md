@@ -52,7 +52,7 @@ use this query (can be transport in Remote Procedure Call )
         NamePattern = "XX"
     };
 ```
-buil sql
+build sql
 
 ```sql
 SELECT  [Id] As [Id] , [Name] As [name] , [CreateTime] As [CreateTime]  FROM [Application] with(nolock)   WHERE  [Id] IN @Ids AND [Name] like @NamePattern AND [Id] > @IdLeft
