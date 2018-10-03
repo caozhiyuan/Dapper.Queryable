@@ -1,12 +1,21 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
+using Dapper.Queryable.Queryable;
 
 namespace Dapper.Queryable.Utils
 {
     public class MethodInfoUtil
     {
+
+        public static readonly Lazy<IEnumerable<MethodInfo>> StringConcatMethodInfos = new Lazy<IEnumerable<MethodInfo>>(() =>
+        {
+            return typeof(string).GetMethods().Where(m => m.Name == "Concat");
+        });
+
         public static readonly MethodInfo StringBuilderToString =
             typeof(StringBuilder).GetMethod("ToString", new Type[0]);
 
@@ -18,6 +27,12 @@ namespace Dapper.Queryable.Utils
         private static BindingFlags BindingFlags = BindingFlags.Static | BindingFlags.NonPublic;
         public static readonly MethodInfo ReplaceMethod = typeof(MethodInfoUtil).GetMethod("Replace", BindingFlags);
         public static readonly MethodInfo SubStringMethod = typeof(MethodInfoUtil).GetMethod("SubString", BindingFlags);
+
+        public static readonly MethodInfo DynanicParametersAddMethod = typeof(DynanicParameters).GetMethod("Add", new[]
+        {
+            typeof(string),
+            typeof(object)
+        });
 
         private static string Replace(string oldstring, string patten, string newstring)
         {

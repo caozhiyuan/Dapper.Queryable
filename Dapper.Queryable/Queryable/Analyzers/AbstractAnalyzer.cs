@@ -1,10 +1,11 @@
-﻿using Dapper.Queryable.Abstractions.Data.Attributes;
-using System;
+﻿using System;
 using System.Collections.Generic;
+using System.Text;
+using System.Reflection;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Reflection;
-using System.Text;
+using Dapper.Queryable.Abstractions.Data.Attributes;
+using Dapper.Queryable.Utils;
 
 namespace Dapper.Queryable.Queryable.Analyzers
 {
@@ -17,44 +18,27 @@ namespace Dapper.Queryable.Queryable.Analyzers
             this.Analyze(context);
         }
 
-        protected virtual Expression ConcatExpression(Expression left, Expression right)
+        protected Expression ConcatExpression(Expression left, Expression right)
         {
-            return Expression.Call(null, typeof(string).GetMethods().First(m =>
-            {
-                if (m.Name == "Concat")
-                    return m.GetParameters().Length == 2;
-                return false;
-            }), left, right);
+            var methodInfos = MethodInfoUtil.StringConcatMethodInfos.Value;
+            return Expression.Call(null, methodInfos.First(m => m.GetParameters().Length == 2), left, right);
         }
 
-        protected virtual Expression ConcatExpression(Expression arg0, Expression arg1, Expression arg2)
+        protected Expression ConcatExpression(Expression arg0, Expression arg1, Expression arg2)
         {
-            return Expression.Call(null, typeof(string).GetMethods().First(m =>
-            {
-                if (m.Name == "Concat")
-                    return m.GetParameters().Length == 3;
-                return false;
-            }), arg0, arg1, arg2);
+            var methodInfos = MethodInfoUtil.StringConcatMethodInfos.Value;
+            return Expression.Call(null, methodInfos.First(m => m.GetParameters().Length == 3), arg0, arg1, arg2);
         }
 
-        protected virtual Expression CallAddParameters(Expression parametersExpr, Expression keyExpr, Expression valueExpr)
+        protected Expression CallAddParameters(Expression parametersExpr, Expression keyExpr, Expression valueExpr)
         {
-            MethodInfo method = typeof(DynanicParameters).GetMethod("Add", new[]
-            {
-                typeof(string),
-                typeof(object)
-            }) ?? throw new InvalidOperationException();
-
+            MethodInfo method = MethodInfoUtil.DynanicParametersAddMethod;
             return Expression.Call(parametersExpr, method, keyExpr, Expression.Convert(valueExpr, typeof(object)));
         }
 
-        protected virtual Expression CallStringBuilderAppend(Expression stringBuilderInst, Expression stringParam)
+        protected Expression CallStringBuilderAppend(Expression stringBuilderInst, Expression stringParam)
         {
-            MethodInfo method = typeof(StringBuilder).GetMethod("Append", new Type[]
-            {
-                typeof(string)
-            }) ?? throw new InvalidOperationException();
-            return Expression.Call(stringBuilderInst, method, stringParam);
+            return Expression.Call(stringBuilderInst, MethodInfoUtil.StringBuilderAppend, stringParam);
         }
 
         protected string GetColumnName(Type modelType, string propertyName)

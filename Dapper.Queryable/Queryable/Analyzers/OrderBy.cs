@@ -5,7 +5,6 @@ using System.Reflection;
 using System.Text;
 using Dapper.Queryable.Abstractions.Data;
 using Dapper.Queryable.Configuration;
-using Dapper.Queryable.Utils;
 
 namespace Dapper.Queryable.Queryable.Analyzers
 {
