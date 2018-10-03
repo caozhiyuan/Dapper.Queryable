@@ -153,7 +153,8 @@ namespace Dapper.Queryable
                 stringBuilder.Append(options.StartDelimiter);
                 stringBuilder.Append(pk.DbName);
                 stringBuilder.Append(options.EndDelimiter);
-                stringBuilder.Append(" DESC");
+                stringBuilder.Append(" ");
+                stringBuilder.Append(OrderDirection.Desc);
                 if (index != len - 1)
                 {
                     stringBuilder.Append(",");

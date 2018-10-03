@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System.Collections.Generic;
+using System.Diagnostics;
 using Xunit;
 using Dapper.Queryable.Abstractions.Data;
 using Dapper.Queryable.Queryable;
@@ -54,10 +55,23 @@ namespace Dapper.Queryable.Test
                     Left = 1,
                     LeftExclusive = true
                 },
-                NamePattern = "XX"
+                NamePattern = "XX",
+                OrderBys = new List<OrderBy>
+                {
+                    new OrderBy
+                    {
+                        OrderDirection = OrderDirection.Desc,
+                        OrderField = "Id"
+                    },
+                    new OrderBy
+                    {
+                        OrderDirection = OrderDirection.Desc,
+                        OrderField = "CreateTime"
+                    }
+                }
             };
             var cause = new SqlBuilder().SelectAsync(query);
-            Assert.Equal("SELECT  [Id] As [Id] , [Name] As [name] , [CreateTime] As [CreateTime]  FROM [Application] with(nolock) WHERE  [Id] IN @Ids AND [Name] like @NamePattern AND [Id] > @IdLeft", cause.Sql);
+            Assert.Equal("SELECT  [Id] As [Id] , [Name] As [name] , [CreateTime] As [CreateTime]  FROM [Application] with(nolock) WHERE  [Id] IN @Ids AND [Name] like @NamePattern AND [Id] > @IdLeft ORDER BY [Id] Desc, [CreateTime] Desc", cause.Sql);
         }
 
         [Fact]
@@ -92,7 +106,7 @@ namespace Dapper.Queryable.Test
                 Skip = 10
             };
             var cause = new SqlBuilder().SelectAsync(query);
-            Assert.Equal("SELECT  [Id] As [Id] , [Name] As [name] , [CreateTime] As [CreateTime]  FROM [Application] with(nolock) ORDER BY [Id] DESC offset 10 rows fetch next 10 rows only ;SELECT COUNT(1) from [Application] ;", cause.Sql);
+            Assert.Equal("SELECT  [Id] As [Id] , [Name] As [name] , [CreateTime] As [CreateTime]  FROM [Application] with(nolock) ORDER BY [Id] Desc offset 10 rows fetch next 10 rows only ;SELECT COUNT(1) from [Application] ;", cause.Sql);
         }
 
         [Fact]

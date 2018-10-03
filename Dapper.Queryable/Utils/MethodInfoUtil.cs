@@ -25,13 +25,19 @@ namespace Dapper.Queryable.Utils
         });
 
         private static BindingFlags BindingFlags = BindingFlags.Static | BindingFlags.NonPublic;
-        public static readonly MethodInfo ReplaceMethod = typeof(MethodInfoUtil).GetMethod("Replace", BindingFlags);
-        public static readonly MethodInfo SubStringMethod = typeof(MethodInfoUtil).GetMethod("SubString", BindingFlags);
+        public static readonly MethodInfo ReplaceMethod = typeof(MethodInfoUtil).GetMethod(nameof(Replace), BindingFlags);
+        public static readonly MethodInfo SubStringMethod = typeof(MethodInfoUtil).GetMethod(nameof(SubString), BindingFlags);
 
         public static readonly MethodInfo DynanicParametersAddMethod = typeof(DynanicParameters).GetMethod("Add", new[]
         {
             typeof(string),
             typeof(object)
+        });
+
+        private static readonly MethodInfo ChangeTypeMethod = typeof(Convert).GetMethod("ChangeType", new[]
+        {
+            typeof(object),
+            typeof(TypeCode)
         });
 
         private static string Replace(string oldstring, string patten, string newstring)
@@ -45,12 +51,6 @@ namespace Dapper.Queryable.Utils
                 return string.Empty;
             return oldstring.Substring(0, oldstring.Length - 1);
         }
-
-        private static readonly MethodInfo ChangeTypeMethod = typeof(Convert).GetMethod("ChangeType", new[]
-        {
-            typeof(object),
-            typeof(TypeCode)
-        });
 
         public static Action<object, object> MakeFastPropertySetter(Type modelType, PropertyInfo propertyInfo)
         {

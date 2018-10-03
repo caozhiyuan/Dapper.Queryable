@@ -57,10 +57,10 @@ namespace Dapper.Queryable
 
         public static List<ColumnDescriptor> GetColumnDescriptors(Type typeOfModel)
         {
-            var cols = TableColumns.GetOrAdd(typeOfModel, n =>
+            return TableColumns.GetOrAdd(typeOfModel, n =>
             {
-                var columns = new List<ColumnDescriptor>();
                 var properties = n.GetProperties();
+                var columns = new List<ColumnDescriptor>(properties.Length);
                 foreach (var propertyInfo in properties)
                 {
                     if (Types.Contains(propertyInfo.PropertyType) &&
@@ -99,41 +99,41 @@ namespace Dapper.Queryable
 
                 if (columns.Count == 0)
                 {
-                    throw new ArgumentException($"{typeOfModel.FullName} no cols");
+                    throw new ArgumentException($"{n.FullName} no cols");
                 }
 
                 var pkCount = columns.Count(m => m.IsPrimaryKey);
                 if (pkCount == 0)
                 {
-                    throw new ArgumentException($"{typeOfModel.FullName} no PrimaryKey");
+                    throw new ArgumentException($"{n.FullName} no PrimaryKey");
                 }
 
                 if (pkCount > 1)
                 {
-                    throw new ArgumentException($"{typeOfModel.FullName} PrimaryKey Only Support One ");
+                    throw new ArgumentException($"{n.FullName} PrimaryKey Only Support One ");
                 }
                 return columns;
             });
-            return cols;
         }
 
         public static Analyzer GetDialect(Type type)
         {
             var tableAttr = GetTable(type);
-
             return tableAttr.Analyzer;
         }
 
         public static TableAttribute GetTable(Type type)
         {
-            if (!Tables.TryGetValue(type, out var tableAttribute))
+            return Tables.GetOrAdd(type, n =>
             {
-                var obj = type.GetCustomAttributes(typeof(TableAttribute), false).FirstOrDefault();
-                tableAttribute = (TableAttribute) obj ?? throw new ArgumentNullException(nameof(type));
-                Tables.TryAdd(type, tableAttribute);
-            }
-
-            return tableAttribute;
+                var obj = n.GetCustomAttributes(typeof(TableAttribute), false).FirstOrDefault();
+                var tableAttribute = obj as TableAttribute;
+                if (tableAttribute?.Name == null || tableAttribute.Db == null)
+                {
+                    throw new ArgumentException($"{n.FullName} TableAttribute Error");
+                }
+                return tableAttribute;
+            });
         }
     }
 }

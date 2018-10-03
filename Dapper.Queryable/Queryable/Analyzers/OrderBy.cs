@@ -50,7 +50,7 @@ namespace Dapper.Queryable.Queryable.Analyzers
 
         protected override void Analyze(Context context)
         {
-            var method0 = typeof(OrderBy).GetMethod("BuildSort", BindingFlags.NonPublic | BindingFlags.Static);
+            var method0 = typeof(OrderBy).GetMethod(nameof(BuildSort), BindingFlags.NonPublic | BindingFlags.Static);
             var method = method0?.MakeGenericMethod(context.ModelType);
             if (method == null)
             {
