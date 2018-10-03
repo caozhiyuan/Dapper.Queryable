@@ -89,7 +89,7 @@ namespace Dapper.Queryable
             public object Id { get; set; }
         }
 
-        public static Task<int> UpdateAsync<T>(this IDbConnection connection, T entityToInsert,
+        public static Task<int> UpdateAsync<T>(this IDbConnection connection, T entity,
             IDbTransaction transaction = null)
             where T : class
         {
@@ -104,10 +104,10 @@ namespace Dapper.Queryable
                 Trace.WriteLine(sql);
             }
 
-            return connection.ExecuteAsync(sql, entityToInsert, transaction);
+            return connection.ExecuteAsync(sql, entity, transaction);
         }
 
-        public static Task<int> DeleteAsync<T>(this IDbConnection connection, T entityToInsert,
+        public static Task<int> DeleteAsync<T>(this IDbConnection connection, T entity,
             IDbTransaction transaction = null)
             where T : class
         {
@@ -122,7 +122,7 @@ namespace Dapper.Queryable
                 Trace.WriteLine(sql);
             }
 
-            return connection.ExecuteAsync(sql, entityToInsert, transaction);
+            return connection.ExecuteAsync(sql, entity, transaction);
         }
     }
 }

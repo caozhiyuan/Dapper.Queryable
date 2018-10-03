@@ -21,17 +21,17 @@ namespace Dapper.Queryable.Test
 
         private static string ConnectionString => $"Data Source=.;Initial Catalog=systest;Integrated Security=True";
 
-        private IDbConnection GetOpenConnection()
+        private async Task<IDbConnection> GetOpenConnection()
         {
             var connection = new SqlConnection(ConnectionString);
-            connection.Open();
+            await connection.OpenAsync();
             return connection;
         }
 
         [Fact]
         public async Task SelectIdsAsync()
         {
-            using (var connection = GetOpenConnection())
+            using (var connection = await GetOpenConnection())
             {
                 var application = await connection.SelectFirstOrDefaultAsync(new ApplicationQuery()
                 {
@@ -44,7 +44,7 @@ namespace Dapper.Queryable.Test
         [Fact]
         public async Task SelectPagedAsync()
         {
-            using (var connection = GetOpenConnection())
+            using (var connection = await GetOpenConnection())
             {
                 var app = new Application
                 {
@@ -74,7 +74,7 @@ namespace Dapper.Queryable.Test
         [Fact]
         public async Task UpdateAsync()
         {
-            using (var connection = GetOpenConnection())
+            using (var connection = await GetOpenConnection())
             {
                 var app = new Application
                 {
@@ -97,7 +97,7 @@ namespace Dapper.Queryable.Test
         [Fact]
         public async Task DeleteAsync()
         {
-            using (var connection = GetOpenConnection())
+            using (var connection = await GetOpenConnection())
             {
                 var app = new Application
                 {
@@ -112,7 +112,7 @@ namespace Dapper.Queryable.Test
         [Fact]
         public async Task InsertAsync()
         {
-            using (var connection = GetOpenConnection())
+            using (var connection = await GetOpenConnection())
             {
                 await connection.InsertAsync(new Application()
                 {
@@ -136,7 +136,7 @@ namespace Dapper.Queryable.Test
                     TransactionScopeAsyncFlowOption.Enabled))
                 {
                     var uniqueName = Guid.NewGuid().ToString();
-                    using (var connection = GetOpenConnection())
+                    using (var connection = await GetOpenConnection())
                     {
                         var applications = new List<Application>();
                         for (int i = 0; i < 5000; i++)
