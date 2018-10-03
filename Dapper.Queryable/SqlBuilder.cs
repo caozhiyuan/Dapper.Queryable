@@ -113,8 +113,6 @@ namespace Dapper.Queryable
         private string BuildPageSql<TModel>(IQuery<TModel> query, Clause clause)
         {
             var descriptor = TableCache.GetTableDescriptor(typeof(TModel));
-            if (descriptor == null)
-                throw new ArgumentException("TableName");
 
             clause.Paging = true;
 
@@ -169,28 +167,34 @@ namespace Dapper.Queryable
         public Clause SelectAsync<TModel>(IQuery<TModel> query)
         {
             var clause = BuildClause(query);
-            if (query.Skip.HasValue || query.Take.HasValue)
+            try
             {
-                var sql = BuildPageSql(query, clause);
-                clause.Sql = sql;
+                if (query.Skip.HasValue || query.Take.HasValue)
+                {
+                    var sql = BuildPageSql(query, clause);
+                    clause.Sql = sql;
+                    return clause;
+                }
+
+                if (string.IsNullOrEmpty(clause.Where))
+                {
+                    return clause;
+                }
+
+                var descriptor = TableCache.GetTableDescriptor(typeof(TModel));
+
+                var sqlBuilder = StringBuilderCache.Acquire();
+                sqlBuilder.Append(this.BuildSelectSql(descriptor));
+                sqlBuilder.Append(clause.Where);
+                sqlBuilder.Append(clause.OrderBy);
+                clause.Sql = StringBuilderCache.GetStringAndRelease(sqlBuilder);
                 return clause;
             }
-
-            if (string.IsNullOrEmpty(clause.Where))
+            finally
             {
-                return clause;
+                clause.Where = null;
+                clause.OrderBy = null;
             }
-
-            var descriptor = TableCache.GetTableDescriptor(typeof(TModel));
-            if (descriptor == null)
-                throw new ArgumentException("TableName");
-
-            var sqlBuilder = StringBuilderCache.Acquire();
-            sqlBuilder.Append(this.BuildSelectSql(descriptor));
-            sqlBuilder.Append(clause.Where);
-            sqlBuilder.Append(clause.OrderBy);
-            clause.Sql = StringBuilderCache.GetStringAndRelease(sqlBuilder);
-            return clause;
         }
 
         private static string GetColumns(TableDescriptor descriptor)

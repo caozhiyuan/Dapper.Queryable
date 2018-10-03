@@ -7,11 +7,11 @@ using Xunit.Abstractions;
 
 namespace Dapper.Queryable.Test
 {
-    public class QueryableTest
+    public class SqlBuilderTest
     {
         private readonly ITestOutputHelper _outputHelper;
 
-        public QueryableTest(ITestOutputHelper outputHelper)
+        public SqlBuilderTest(ITestOutputHelper outputHelper)
         {
             _outputHelper = outputHelper;
         }

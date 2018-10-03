@@ -10,11 +10,11 @@ using Xunit.Abstractions;
 
 namespace Dapper.Queryable.Test
 {
-    public class DapperExtensionTest
+    public class DbConnectionTest
     {
         private readonly ITestOutputHelper _outputHelper;
 
-        public DapperExtensionTest(ITestOutputHelper outputHelper)
+        public DbConnectionTest(ITestOutputHelper outputHelper)
         {
             _outputHelper = outputHelper;
         }
@@ -93,8 +93,6 @@ namespace Dapper.Queryable.Test
                 }
             }
         }
-
-
 
         [Fact]
         public async Task DeleteAsync()

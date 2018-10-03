@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Dapper.Queryable.Abstractions.Data;
@@ -22,9 +23,15 @@ namespace Dapper.Queryable
             this IDbConnection connection, IQuery<T> query) where T : class
         {
             var clause = LazySqlBuilder.Value.SelectAsync(query);
+
+            if (Debugger.IsAttached)
+            {
+                Trace.WriteLine(clause.Sql);
+            }
+
             if (string.IsNullOrEmpty(clause.Sql))
             {
-                throw new ArgumentException("SqlBuilder Return Sql Empty");
+                return Enumerable.Empty<T>();
             }
 
             var dynamicParameters = new DynamicParameters();
@@ -52,6 +59,11 @@ namespace Dapper.Queryable
             if (string.IsNullOrEmpty(sql))
             {
                 throw new ArgumentException("SqlBuilder Return Sql Empty");
+            }
+
+            if (Debugger.IsAttached)
+            {
+                Trace.WriteLine(sql);
             }
 
             if (type.IsArray)
@@ -87,6 +99,11 @@ namespace Dapper.Queryable
                 throw new ArgumentException("SqlBuilder Return Sql Empty");
             }
 
+            if (Debugger.IsAttached)
+            {
+                Trace.WriteLine(sql);
+            }
+
             return connection.ExecuteAsync(sql, entityToInsert, transaction);
         }
 
@@ -98,6 +115,11 @@ namespace Dapper.Queryable
             if (string.IsNullOrEmpty(sql))
             {
                 throw new ArgumentException("SqlBuilder Return Sql Empty");
+            }
+
+            if (Debugger.IsAttached)
+            {
+                Trace.WriteLine(sql);
             }
 
             return connection.ExecuteAsync(sql, entityToInsert, transaction);
