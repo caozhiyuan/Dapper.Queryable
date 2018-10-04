@@ -1,4 +1,5 @@
 ﻿using System.Collections.Concurrent;
+using System.Collections.Generic;
 
 namespace Dapper.Queryable.Queryable
 {
@@ -17,36 +18,20 @@ namespace Dapper.Queryable.Queryable
 
     public class DynanicParameters
     {
-        private readonly ConcurrentDictionary<string, ParameterInfo> _parameters = new ConcurrentDictionary<string, ParameterInfo>();
+        private readonly List<ParameterInfo> _parameters = new List<ParameterInfo>(16);
 
         public void Add(string name, object value = null)
         {
-            _parameters.TryAdd(Clean(name), new ParameterInfo
+            _parameters.Add(new ParameterInfo
             {
                 Name = name,
                 Value = value
             });
         }
 
-        public ConcurrentDictionary<string, ParameterInfo> GetParameters()
+        public IEnumerable<ParameterInfo> GetParameters()
         {
             return _parameters;
-        }
-
-
-        private static string Clean(string name)
-        {
-            if (!string.IsNullOrEmpty(name))
-            {
-                switch (name[0])
-                {
-                    case '@':
-                    case ':':
-                    case '?':
-                        return name.Substring(1);
-                }
-            }
-            return name;
         }
     }
 

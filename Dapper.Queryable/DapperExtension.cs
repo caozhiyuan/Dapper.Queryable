@@ -36,7 +36,7 @@ namespace Dapper.Queryable
 
             var dynamicParameters = new DynamicParameters();
             var parameters = clause.Parameters.GetParameters();
-            foreach (var parameter in parameters.Values)
+            foreach (var parameter in parameters)
             {
                 dynamicParameters.Add(parameter.Name, parameter.Value);
             }
