@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 using System.Diagnostics;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Transactions;
 using Xunit;
@@ -29,16 +30,92 @@ namespace Dapper.Queryable.Test
         }
 
         [Fact]
-        public async Task SelectIdsAsync()
+        public void RawQueryStressTest()
         {
+            RawQueryTest();
+
+            Stopwatch sw = new Stopwatch();
+            sw.Start();
+
+            RawQueryTest();
+
+            _outputHelper.WriteLine("ElapsedMilliseconds " + sw.ElapsedMilliseconds);
+        }
+
+        private void RawQueryTest()
+        {
+            const int c = 10000;
+            CountdownEvent k = new CountdownEvent(c);
+            Parallel.For(0, c, (i) =>
+            {
+                var task = RawGetApplicationById(c);
+                task.ContinueWith(n =>
+                {
+                    if (n.IsFaulted)
+                    {
+                        _outputHelper.WriteLine($"{i} {n.Exception}");
+                    }
+
+                    k.Signal(1);
+                });
+            });
+            k.Wait();
+        }
+
+        private async Task<Application> RawGetApplicationById(int id)
+        {
+            Application application;
             using (var connection = await GetOpenConnection())
             {
-                var application = await connection.SelectFirstOrDefaultAsync(new ApplicationQuery()
-                {
-                    Ids = new[] { 0 }
-                });
-                Assert.Null(application);
+                application = await connection.QueryFirstOrDefaultAsync<Application>("SELECT  [Id] As [Id] , [Name] As [name] , [CreateTime] As [CreateTime]  FROM [Application] with(nolock) WHERE  [Id] IN @Ids", new {Ids = new[] {id}});
             }
+            return application;
+        }
+
+        [Fact]
+        public void QueryStressTest()
+        {
+            QueryTest();
+
+            Stopwatch sw = new Stopwatch();
+            sw.Start();
+
+            QueryTest();
+
+            _outputHelper.WriteLine("ElapsedMilliseconds " + sw.ElapsedMilliseconds);
+        }
+
+        private void QueryTest()
+        {
+            const int c = 10000;
+            CountdownEvent k = new CountdownEvent(c);
+            Parallel.For(0, c, (i) =>
+            {
+                var task = GetApplicationById(c);
+                task.ContinueWith(n =>
+                {
+                    if (n.IsFaulted)
+                    {
+                        _outputHelper.WriteLine($"{i} {n.Exception}");
+                    }
+
+                    k.Signal(1);
+                });
+            });
+            k.Wait();
+        }
+        
+        private async Task<Application> GetApplicationById(int id)
+        {
+            Application application;
+            using (var connection = await GetOpenConnection())
+            {
+                application = await connection.SelectFirstOrDefaultAsync(new ApplicationQuery()
+                {
+                    Ids = new[] {id}
+                });
+            }
+            return application;
         }
 
         [Fact]
