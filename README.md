@@ -1,4 +1,4 @@
-# Dapper.Queryable
+# Dapper.Queryable (For Single Table Operation)
 
 
 Queryable Analyzers
