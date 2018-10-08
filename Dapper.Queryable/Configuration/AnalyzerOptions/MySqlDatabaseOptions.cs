@@ -1,4 +1,6 @@
-﻿namespace Dapper.Queryable.Configuration.AnalyzerOptions
+﻿using Dapper.Queryable.Utils;
+
+namespace Dapper.Queryable.Configuration.AnalyzerOptions
 {
     internal class MySqlDatabaseOptions : SqlDatabaseOptions
     {
@@ -18,14 +20,19 @@
                 case SqlOperation.Delete:
                     return "DELETE FROM `{TableName}` {WhereClause}";
                 default:
-                    return (string)null;
+                    return null;
             }
         }
 
         public override string GetSelectSql(string columns, string tableName)
         {
-            var str = $"SELECT {columns} FROM `{tableName}`";
-            return str;
+            var sb = StringBuilderCache.Acquire();
+            sb.Append("SELECT ");
+            sb.Append(columns);
+            sb.Append(" FROM `");
+            sb.Append(tableName);
+            sb.Append("`");
+            return StringBuilderCache.GetStringAndRelease(sb);
         }
 
         public override string GetPageSql(int skip, int take)
