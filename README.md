@@ -58,5 +58,5 @@ build sql
 SELECT  [Id] As [Id] , [Name] As [name] , [CreateTime] As [CreateTime]  FROM [Application] with(nolock)   WHERE  [Id] IN @Ids AND [Name] like @NamePattern AND [Id] > @IdLeft
 ```
 
-Detail In Test : https://github.com/caozhiyuan/Dapper.Queryable/blob/master/Dapper.Queryable.Test/DapperExtensionTest.cs
+Detail In Test : https://github.com/caozhiyuan/Dapper.Queryable/blob/master/Dapper.Queryable.Test/DbConnectionTest.cs
 
