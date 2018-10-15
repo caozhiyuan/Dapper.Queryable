@@ -2,7 +2,7 @@
 
 namespace Dapper.Queryable.Queryable
 {
-    public class MsAnalyzer
+    public class SqlAnalyzer
     {
         private static IAnalyzer[] Analyzers { get; set; }
 

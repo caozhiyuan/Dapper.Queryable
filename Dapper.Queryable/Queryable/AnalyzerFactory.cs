@@ -10,9 +10,8 @@ namespace Dapper.Queryable.Queryable
             switch (analyzer)
             {
                 case Analyzer.Ms:
-                    return MsAnalyzer.Create();
                 case Analyzer.My:
-                    return MyAnalyzer.Create();
+                    return SqlAnalyzer.Create();
                 default:
                     throw new ArgumentException(nameof(analyzer));
             }
