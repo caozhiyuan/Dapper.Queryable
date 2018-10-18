@@ -181,11 +181,11 @@ namespace Dapper.Queryable
                 var n = descriptor.ColumnDescriptors[i];
                 stringBuilder.Append(" ");
                 stringBuilder.Append(startDelimiter);
-                stringBuilder.Append(n.Name);
+                stringBuilder.Append(n.DbName);
                 stringBuilder.Append(endDelimiter);
                 stringBuilder.Append(" As ");
                 stringBuilder.Append(startDelimiter);
-                stringBuilder.Append(n.DbName);
+                stringBuilder.Append(n.Name);
                 stringBuilder.Append(endDelimiter);
                 stringBuilder.Append(" ");
                 if (i != len - 1)
