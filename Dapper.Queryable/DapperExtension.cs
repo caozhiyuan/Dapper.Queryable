@@ -44,7 +44,9 @@ namespace Dapper.Queryable
             var result = await grid.ReadAsync<T>() ?? Enumerable.Empty<T>();
             if (clause.Paging)
             {
-                query.Count = (await grid.ReadAsync<int>()).FirstOrDefault();
+                var dapperRow = (await grid.ReadAsync<dynamic>()).FirstOrDefault();
+                var row = dapperRow as IDictionary<string, object>;
+                query.Count = Convert.ToInt32(row?.Values.ElementAt(0));
             }
 
             return result;

@@ -29,4 +29,28 @@ namespace Dapper.Queryable.Test
 
         public Range<int> IdRange { get; set; }
     }
+
+    [Table(Analyzer = Analyzer.My, Db = "systest", Name = "Application")]
+    public class MyApplication : IModel
+    {
+        [Key(AutoIncrement = true)]
+        public int Id { get; set; }
+
+        [Column(Name = "name")]
+        public string Name { get; set; }
+
+        public DateTime CreateTime { get; set; }
+    }
+
+    public class MyApplicationQuery : AbstractQuery<MyApplication>
+    {
+        [CacheKey]
+        public int[] Ids { get; set; }
+
+        public string NamePattern { get; set; }
+
+        public string Name { get; set; }
+
+        public Range<int> IdRange { get; set; }
+    }
 }

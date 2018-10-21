@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Transactions;
+using MySql.Data.MySqlClient;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -20,6 +21,7 @@ namespace Dapper.Queryable.Test
             _outputHelper = outputHelper;
         }
 
+        //private static string ConnectionString => $"User ID=root;Password=123456;Host=localhost;Port=3306;Database=test;Pooling=true;Min Pool Size=0;Max Pool Size=100;SslMode=None";
         private static string ConnectionString => $"Data Source=.;Initial Catalog=systest;Integrated Security=True";
 
         private async Task<IDbConnection> GetOpenConnection()
