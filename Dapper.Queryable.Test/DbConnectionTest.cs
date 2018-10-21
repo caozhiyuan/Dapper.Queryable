@@ -132,13 +132,25 @@ namespace Dapper.Queryable.Test
                 };
                 await connection.InsertAsync(app);
 
-                var applications = await connection.SelectAsync(new ApplicationQuery()
+                var query = new ApplicationQuery()
                 {
                     Take = 10,
                     Skip = 0,
                     NamePattern = app.Name
-                });
+                };
+                var applications = await connection.SelectAsync(query);
                 Assert.NotEmpty(applications);
+                Assert.Equal(1, query.Count);
+
+                query = new ApplicationQuery()
+                {
+                    Take = 10,
+                    Skip = 0,
+                    NamePattern = "111111111111111111111111111111111111111111111"
+                };
+                applications = await connection.SelectAsync(query);
+                Assert.Empty(applications);
+                Assert.Equal(0, query.Count);
 
                 applications = await connection.SelectAsync(new ApplicationQuery()
                 {
