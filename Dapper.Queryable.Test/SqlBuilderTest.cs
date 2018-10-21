@@ -71,7 +71,7 @@ namespace Dapper.Queryable.Test
                 }
             };
             var cause = new SqlBuilder().SelectAsync(query);
-            Assert.Equal("SELECT  [Id] As [Id] , [Name] As [name] , [CreateTime] As [CreateTime]  FROM [Application] with(nolock) WHERE  [Id] IN @Ids AND [Name] like @NamePattern AND [Id] > @IdLeft ORDER BY [Id] Desc, [CreateTime] Desc", cause.Sql);
+            Assert.Equal("SELECT  [Id] As [Id] , [name] As [Name] , [CreateTime] As [CreateTime]  FROM [Application] with(nolock) WHERE  [Id] IN @Ids AND [Name] like @NamePattern AND [Id] > @IdLeft ORDER BY [Id] Desc, [CreateTime] Desc", cause.Sql);
         }
 
         [Fact]
@@ -106,7 +106,7 @@ namespace Dapper.Queryable.Test
                 Skip = 10
             };
             var cause = new SqlBuilder().SelectAsync(query);
-            Assert.Equal("SELECT  [Id] As [Id] , [Name] As [name] , [CreateTime] As [CreateTime]  FROM [Application] with(nolock) ORDER BY [Id] Desc offset 10 rows fetch next 10 rows only ;SELECT COUNT(1) from [Application] ;", cause.Sql);
+            Assert.Equal("SELECT  [Id] As [Id] , [name] As [Name] , [CreateTime] As [CreateTime]  FROM [Application] with(nolock) ORDER BY [Id] Desc offset 10 rows fetch next 10 rows only ;SELECT COUNT(1) from [Application] ;", cause.Sql);
         }
 
         [Fact]
